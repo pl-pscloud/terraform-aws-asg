@@ -33,5 +33,4 @@ resource "aws_autoscaling_attachment" "pscloud-asg-attachment" {
 
   autoscaling_group_name      = aws_autoscaling_group.pscloud-asg.id
   alb_target_group_arn        = var.pscloud_lb_tg_arn
-  //elb                         = var.pscloud_elb_id
 }
