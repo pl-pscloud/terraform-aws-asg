@@ -29,8 +29,60 @@ resource "aws_autoscaling_group" "pscloud-asg" {
 }
 
 resource "aws_autoscaling_attachment" "pscloud-asg-attachment" {
-  count = (var.pscloud_attachment_true == true ? 1 : 0)
+  count                     = var.pscloud_attachment_true ? 1 : 0
 
-  autoscaling_group_name      = aws_autoscaling_group.pscloud-asg.id
-  alb_target_group_arn        = var.pscloud_lb_tg_arn
+  autoscaling_group_name    = aws_autoscaling_group.pscloud-asg.id
+  alb_target_group_arn      = var.pscloud_lb_tg_arn
+}
+
+resource "aws_autoscaling_policy" "pscloud-scale-up" {
+  name                      = "${var.pscloud_company}-asg-policy-scale-up-${var.pscloud_env}"
+  scaling_adjustment        = var.pscloud_scale_adjustment_scale_up
+  adjustment_type           = var.pscloud_scale_adjustment_type
+  policy_type               = var.pscloud_scale_policy_type
+  cooldown                  = var.pscloud_scale_cooldown
+  autoscaling_group_name = aws_autoscaling_group.pscloud-asg.name
+}
+
+resource "aws_autoscaling_policy" "pscloud-scale-down" {
+  name                      = "${var.pscloud_company}-asg-policy-scale-down-${var.pscloud_env}"
+  scaling_adjustment        = var.pscloud_scale_adjustment_scale_down
+  adjustment_type           = var.pscloud_scale_adjustment_type
+  policy_type               = var.pscloud_scale_policy_type
+  cooldown                  = var.pscloud_scale_cooldown
+  autoscaling_group_name    = aws_autoscaling_group.pscloud-asg.name
+}
+
+resource "aws_cloudwatch_metric_alarm" "pscloud-cloudwatch-cpu-high" {
+  alarm_name                = "${var.pscloud_company}-pscloud-cloudwatch-cpu-high-alarm-${var.pscloud_env}"
+  comparison_operator       = "GreaterThanOrEqualToThreshold"
+  evaluation_periods        = 2
+  metric_name               = "CPUUtilization"
+  namespace                 = "AWS/EC2"
+  period                    = 120
+  statistic                 = "Average"
+  threshold                 = 80
+
+  dimensions = {
+    AutoScalingGroupName    = aws_autoscaling_group.pscloud-asg.name
+  }
+
+  alarm_actions             = [ aws_autoscaling_policy.pscloud-scale-up.arn ]
+}
+
+resource "aws_cloudwatch_metric_alarm" "pscloud-cloudwatch-cpu-low" {
+  alarm_name                = "${var.pscloud_company}-pscloud-cloudwatch-cpu-low-alarm-${var.pscloud_env}"
+  comparison_operator       = "LessThanOrEqualToThreshold"
+  evaluation_periods        = 2
+  metric_name               = "CPUUtilization"
+  namespace                 = "AWS/EC2"
+  period                    = 120
+  statistic                 = "Average"
+  threshold                 = 40
+
+  dimensions = {
+    AutoScalingGroupName    = aws_autoscaling_group.pscloud-asg.name
+  }
+
+  alarm_actions             = [ aws_autoscaling_policy.pscloud-scale-down.arn ]
 }

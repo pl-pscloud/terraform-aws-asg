@@ -16,4 +16,9 @@ variable "pscloud_max_size" {}
 
 variable "pscloud_attachment_true" {}
 variable "pscloud_lb_tg_arn" {}
-//variable "pscloud_elb_id" {}
+
+variable "pscloud_scale_adjustment_scale_up" {}
+variable "pscloud_scale_adjustment_scale_down" {}
+variable "pscloud_scale_adjustment_type" {}
+variable "pscloud_scale_policy_type" {}
+variable "pscloud_scale_cooldown" {}
